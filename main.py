@@ -1,52 +1,85 @@
-import toml
 import pandas as pd
 import numpy as np
 
-df = pd.read_csv("planets.csv")
-print(df)
+def change_missing_numbers_to_nan(csv_name: str, looking_patterns: list, numeric_columns: list ):
+    df = pd.read_csv(csv_name, na_values=looking_patterns)
 
-# Order by given field
-df.sort_values("year", inplace = True)
-print(df)
+    for column_name in numeric_columns:
+        cnt = 0
+        for value in df[column_name]:
+            try:
+                int(value)
+                if int(value) <= 0:
+                    df.loc[cnt, column_name] = np.nan
+            except ValueError:
+                df.loc[cnt, column_name] = np.nan
+            cnt += 1
+    df = df.drop('Unnamed: 0', 1)
+    return df
 
-# Select duplicate rows based on one column
-duplicateRowsDF = df[df.duplicated(['year'])]
-print("Duplicate rows:", duplicateRowsDF, sep='\n')
-# Remove duplicates from dataframe - keeping first occurrence
-df.drop_duplicates(subset =['year'], keep = "first",
-                   inplace = True)
-print(df)
+def get_numeric_columns(df):
+    numeric_columns = []
+    non_numeric_columns = []
 
-# Save dataframe to file
-df.to_csv("planets_WithoutDuplicates.csv")
+    for column_name in df.columns:
+        for value in df[column_name]:
+            if not pd.isnull(value):
+                try:
+                    int(value)
+                    if column_name not in numeric_columns:
+                        numeric_columns.append(column_name)
+                except ValueError:
+                    if column_name not in non_numeric_columns:
+                        non_numeric_columns.append(column_name)
 
-# Detect missing and invalid fields
+    return numeric_columns, non_numeric_columns
 
-# Making a list of missing value types
-# Phyton will consider these values as NaN
-missing_values = ["n/a", "na", "-", "--"]
-df = pd.read_csv("planets_WithoutDuplicates.csv",
-                 na_values = missing_values)
+def set_correct_column_type(df):
+    wrong_types_columns = []
 
-# Check if price is number - otherwise treat it as missing value
-cnt=0
-for value in df['mass']:
-    try:
-        int(value)
-        if int(value)<=0 :  # price cannot be negative
-            df.loc[cnt, 'mass']=np.nan
-    except ValueError:
-        df.loc[cnt, 'mass']=np.nan
-    cnt+=1
+    for column_name in df.columns:
+        for value in df[column_name]:
+            if not pd.isnull(value):
+                try:
+                    if float(value):
+                        if column_name not in wrong_types_columns:
+                            wrong_types_columns.append(column_name)
+                except:
+                    pass
+    for column in wrong_types_columns:
+        df[column] = pd.to_numeric(df[column], errors= 'coerce')
+    return df
 
-# Total missing values for each feature
-print(df.isnull().sum())
+def set_missing_nan_values_to_median(df, numeric_columns):
+    for column in numeric_columns:
+        median = df[column].median()
+        df[column].fillna(median, inplace=True)
 
-# Replace missing and incorrect PRICE values using median
-median = df['mass'].median()
-df['mass'].fillna(median, inplace=True)
+def drop_non_numeric_rows_with_nan_value(df):
+    df.dropna(inplace=True)
 
-# Select rows where value is missing
-df.dropna(inplace=True)
 
-print(df)
+def main():
+    df = pd.read_csv("penguins.csv")
+    print(df)
+    cleaned_csv_name = "penguins_WithoutDuplicates.csv"
+    df.drop_duplicates(inplace=True)
+    df.to_csv(cleaned_csv_name)
+    looking_patterns = ["n/a", "na", "-", "--"]
+    df = set_correct_column_type(df)
+
+    print(df.isnull().sum())
+    numeric_columns, non_numeric_columns = get_numeric_columns(df)
+    df = change_missing_numbers_to_nan(cleaned_csv_name,
+                                       looking_patterns,
+                                       numeric_columns)
+
+    set_missing_nan_values_to_median(df, numeric_columns)
+    drop_non_numeric_rows_with_nan_value(df)
+
+    df.info()
+    print(df)
+
+
+if __name__ == '__main__':
+    main()
