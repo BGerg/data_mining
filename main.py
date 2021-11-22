@@ -1,5 +1,13 @@
 import pandas as pd
 import numpy as np
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.cluster import KMeans
 
 def change_missing_numbers_to_nan(csv_name: str, looking_patterns: list, numeric_columns: list ):
     df = pd.read_csv(csv_name, na_values=looking_patterns)
@@ -58,6 +66,16 @@ def set_missing_nan_values_to_median(df, numeric_columns):
 def drop_non_numeric_rows_with_nan_value(df):
     df.dropna(inplace=True)
 
+def create_histogram(df, cloumn_name, property_one, property_two, property_three):
+    sns.FacetGrid(df, hue=cloumn_name, height=3).map(sns.distplot, property_one).add_legend()
+    sns.FacetGrid(df, hue=cloumn_name, height=3).map(sns.distplot, property_two).add_legend()
+    sns.FacetGrid(df, hue=cloumn_name, height=3).map(sns.distplot, property_three).add_legend()
+    plt.show()
+
+def visualizing_data_distribution(df, cloumn_name):
+    sns.set_style("whitegrid")
+    sns.pairplot(df, hue=cloumn_name, height=3);
+    plt.show()
 
 def main():
     df = pd.read_csv("penguins.csv")
@@ -80,6 +98,20 @@ def main():
     df.info()
     print(df)
 
+    create_histogram(df,"species","bill_length_mm", "bill_depth_mm", "flipper_length_mm")
+    visualizing_data_distribution(df,"species")
 
+    wcss = []
+    x = df.iloc[:, [ 3,4,5]].values
+    for i in range(1, 11):
+        kmeans = KMeans(n_clusters=i, init='k-means++', max_iter=300, n_init=10, random_state=0)
+        kmeans.fit(x)
+        wcss.append(kmeans.inertia_)
+
+    plt.plot(range(1, 11), wcss)
+    plt.title('The elbow method')
+    plt.xlabel('Number of clusters')
+    plt.ylabel('WCSS')  # within cluster sum of squares
+    plt.show()
 if __name__ == '__main__':
     main()

@@ -5,7 +5,7 @@ __pycache__/
 /seaborn-data
 # C extensions
 *.so
-
+penguins_WithoutDuplicates.csv
 # Distribution / packaging
 .Python
 build/
