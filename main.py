@@ -82,8 +82,6 @@ def set_missing_nan_values_to_median(df, numeric_columns):
         median = df[column].median()
         df[column].fillna(median, inplace=True)
 
-def drop_non_numeric_rows_with_nan_value(df):
-    df.dropna(inplace=True)
 
 def create_histogram(df, cloumn_name, property_one, property_two, property_three):
     sns.FacetGrid(df, hue=cloumn_name, height=3).map(sns.distplot, property_one).add_legend()
@@ -129,18 +127,10 @@ def classification_with_knn(df):
     X = df.iloc[:, 3:4].values
     y = df.iloc[:, 3].values
 
-    # Label encoding:
-    # categorical labels are transformed into numbers
+
     le = LabelEncoder()
     y = le.fit_transform(y)
 
-    # Split the data set before classification
-    # Train set: 70% of data to train the model
-    # Test set: 15% of data to test the model
-    # Validation set: 15% of data used to evaluate
-    # the performance of each classifier and fine-tune
-    # the model parameters
-    # Now we have small data set, therefore test set = validation set
     train, test = train_test_split(df, test_size=0.3,
                                    stratify=df['species'], random_state=42)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
@@ -148,12 +138,11 @@ def classification_with_knn(df):
     n_bins = 10
     fig, axs = plt.subplots(2, 2)
     axs[0, 0].hist(train['bill_length_mm'], bins=n_bins);
-    axs[0, 0].set_title('Sepal bill length mm');
+    axs[0, 0].set_title('Bill length mm');
     axs[0, 1].hist(train['bill_depth_mm'], bins=n_bins);
-    axs[0, 1].set_title('Bill depth mm Width');
+    axs[0, 1].set_title('Bill depth mm');
     axs[1, 0].hist(train['flipper_length_mm'], bins=n_bins);
-    axs[1, 0].set_title('Petal flipper length mm');
-    # add some spacing between subplots
+    axs[1, 0].set_title('Flipper length mm');
     fig.tight_layout(pad=1.0)
     plt.show()
 
@@ -162,8 +151,6 @@ def classification_with_knn(df):
     knn = KNeighborsClassifier(n_neighbors=3)
     knn.fit(X_train, y_train)
     Y_pred = knn.predict(X_test)
-    accuracy_knn = round(metrics.accuracy_score(y_test, Y_pred) * 100, 2)
-    acc_knn = round(knn.score(X_train, y_train) * 100, 2)
 
     cm = metrics.confusion_matrix(y_test, Y_pred)
     accuracy = metrics.accuracy_score(y_test, Y_pred)
@@ -229,7 +216,7 @@ def main():
     df.to_csv(cleaned_csv_name)
     looking_patterns = ["n/a", "na", "-", "--"]
     df = set_correct_column_type(df)
-
+    print(df)
     print(df.isnull().sum())
     numeric_columns, non_numeric_columns = get_numeric_columns(df)
     df = change_missing_numbers_to_nan(cleaned_csv_name,
@@ -237,8 +224,9 @@ def main():
                                        numeric_columns)
 
     set_missing_nan_values_to_median(df, numeric_columns)
-    drop_non_numeric_rows_with_nan_value(df)
-
+    print(df)
+    df.dropna(inplace=True)
+    print(df)
     #classification
     create_histogram(df,"species","bill_length_mm", "bill_depth_mm", "flipper_length_mm")
     kmeans_algorithm(df)
